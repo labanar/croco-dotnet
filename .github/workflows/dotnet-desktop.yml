@@ -16,7 +16,11 @@ jobs:
             runner: windows-latest
           - platform: linux-x64
             runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-latest
           - platform: osx-arm64
+            runner: macos-latest
+          - platform: osx-x64
             runner: macos-latest
     runs-on: ${{ matrix.runner }}
     steps:
