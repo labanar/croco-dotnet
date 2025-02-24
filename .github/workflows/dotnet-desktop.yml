@@ -35,7 +35,7 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore
 
-            # Windows build using PowerShell
+      # Windows publish using PowerShell with backticks for line continuation
       - name: Publish Native AOT Binary for Windows
         if: matrix.platform == 'win-x64'
         working-directory: ./Croco.CLI
@@ -47,22 +47,7 @@ jobs:
             /p:DebugSymbols=false `
             /p:IncludeNativeLibrariesForSelfExtract=true
 
-      # Linux-arm64: Install cross-compilation dependencies
-      - name: Install cross-compilation dependencies for linux-arm64
-        if: matrix.platform == 'linux-arm64'
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo bash -c 'cat > /etc/apt/sources.list.d/arm64.list <<EOF
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse
-          EOF'
-          sudo sed -i -e 's/deb http/deb [arch=amd64] http/g' /etc/apt/sources.list
-          sudo sed -i -e 's/deb mirror/deb [arch=amd64] mirror/g' /etc/apt/sources.list
-          sudo apt update
-          sudo apt install -y clang llvm binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zlib1g-dev:arm64
-          
-      # Linux-arm64 publish (after installing cross dependencies)
+      # Linux-arm64 publish with additional linker property
       - name: Publish Native AOT Binary for linux-arm64
         if: matrix.platform == 'linux-arm64'
         working-directory: ./Croco.CLI
@@ -75,7 +60,7 @@ jobs:
             /p:NativeLinker=lld
 
       # Other non-Windows (linux-x64, osx-arm64, osx-x64) publish using Bash
-      - name: Publish Native AOT Binary for non-linux-arm64 non-Windows
+      - name: Publish Native AOT Binary for non-Windows (except linux-arm64)
         if: matrix.platform != 'win-x64' && matrix.platform != 'linux-arm64'
         working-directory: ./Croco.CLI
         run: |
