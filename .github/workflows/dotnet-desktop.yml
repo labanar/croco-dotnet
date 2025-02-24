@@ -16,8 +16,6 @@ jobs:
             runner: windows-latest
           - platform: linux-x64
             runner: ubuntu-latest
-          - platform: linux-arm64
-            runner: ubuntu-latest
           - platform: osx-arm64
             runner: macos-latest
           - platform: osx-x64
@@ -46,18 +44,6 @@ jobs:
             /p:DebugType=None `
             /p:DebugSymbols=false `
             /p:IncludeNativeLibrariesForSelfExtract=true
-
-      # Linux-arm64 publish with additional linker property
-      - name: Publish Native AOT Binary for linux-arm64
-        if: matrix.platform == 'linux-arm64'
-        working-directory: ./Croco.CLI
-        run: |
-          dotnet publish -c Release -r linux-arm64 \
-            /p:PublishAot=true \
-            /p:DebugType=None \
-            /p:DebugSymbols=false \
-            /p:IncludeNativeLibrariesForSelfExtract=true \
-            /p:NativeLinker=lld
 
       # Other non-Windows (linux-x64, osx-arm64, osx-x64) publish using Bash
       - name: Publish Native AOT Binary for non-Windows (except linux-arm64)
