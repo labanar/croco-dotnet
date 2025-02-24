@@ -2,6 +2,8 @@
 
 Command Line Utility to interface with [Croco RP2040 Based GameBoy Game Cartridge](https://github.com/shilga/rp2040-gameboy-cartridge-firmware)
 
+Based on the Web App found [here](https://github.com/shilga/croco-cartridge-webapp)
+
 
 Command checklist:
 - [x] Read Serial
