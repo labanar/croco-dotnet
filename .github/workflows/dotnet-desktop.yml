@@ -35,8 +35,10 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore
 
-      - name: Publish Native AOT Binary for win-x64
+      # Windows publish using PowerShell with backticks for line continuation
+      - name: Publish Native AOT Binary for Windows
         if: matrix.platform == 'win-x64'
+        working-directory: ./Croco.CLI
         shell: pwsh
         run: |
           dotnet publish -c Release -r win-x64 `
@@ -45,8 +47,21 @@ jobs:
             /p:DebugSymbols=false `
             /p:IncludeNativeLibrariesForSelfExtract=true
 
-      - name: Publish Native AOT Binary for non-Windows
-        if: matrix.platform != 'win-x64'
+      # Linux-arm64 publish with additional linker property
+      - name: Publish Native AOT Binary for linux-arm64
+        if: matrix.platform == 'linux-arm64'
+        working-directory: ./Croco.CLI
+        run: |
+          dotnet publish -c Release -r linux-arm64 \
+            /p:PublishAot=true \
+            /p:DebugType=None \
+            /p:DebugSymbols=false \
+            /p:IncludeNativeLibrariesForSelfExtract=true \
+            /p:NativeLinker=lld
+
+      # Other non-Windows (linux-x64, osx-arm64, osx-x64) publish using Bash
+      - name: Publish Native AOT Binary for non-Windows (except linux-arm64)
+        if: matrix.platform != 'win-x64' && matrix.platform != 'linux-arm64'
         working-directory: ./Croco.CLI
         run: |
           dotnet publish -c Release -r ${{ matrix.platform }} \
