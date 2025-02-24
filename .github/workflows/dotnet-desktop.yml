@@ -51,9 +51,6 @@ jobs:
             /p:DebugSymbols=false \
             /p:IncludeNativeLibrariesForSelfExtract=true
 
-      - name: List published files
-        run: ls -R ./Croco.CLI/bin/Release/net9.0/${{ matrix.platform }}/publish/
-
       - name: Upload Artifact for ${{ matrix.platform }}
         uses: actions/upload-artifact@v4.6.1
         with:
