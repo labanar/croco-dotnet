@@ -1,0 +1,63 @@
+name: Build and Publish Native AOT Binaries
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - platform: win-x64
+            runner: windows-latest
+          - platform: linux-x64
+            runner: ubuntu-latest
+          - platform: osx-arm64
+            runner: macos-latest
+          - platform: osx-x64
+            runner: macos-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'  # Adjust as needed
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      # Windows publish using PowerShell with backticks for line continuation
+      - name: Publish Native AOT Binary for Windows
+        if: matrix.platform == 'win-x64'
+        working-directory: ./Croco.CLI
+        shell: pwsh
+        run: |
+          dotnet publish -c Release -r win-x64 `
+            /p:PublishAot=true `
+            /p:DebugType=None `
+            /p:DebugSymbols=false `
+            /p:IncludeNativeLibrariesForSelfExtract=true
+
+      # Other non-Windows (linux-x64, osx-arm64, osx-x64) publish using Bash
+      - name: Publish Native AOT Binary for non-Windows (except linux-arm64)
+        if: matrix.platform != 'win-x64' && matrix.platform != 'linux-arm64'
+        working-directory: ./Croco.CLI
+        run: |
+          dotnet publish -c Release -r ${{ matrix.platform }} \
+            /p:PublishAot=true \
+            /p:DebugType=None \
+            /p:DebugSymbols=false \
+            /p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Upload Artifact for ${{ matrix.platform }}
+        uses: actions/upload-artifact@v4.6.1
+        with:
+          name: native-aot-${{ matrix.platform }}
+          path: ./Croco.CLI/bin/Release/net9.0/${{ matrix.platform }}/publish/
