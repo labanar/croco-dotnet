@@ -1,9 +1,9 @@
 ﻿namespace Croco.Core.Packets;
 
-public readonly ref struct GetSerialPacket() : ICrocoPayloadlessPacket<GetSerialPacket, GetSerialResponse>
+public readonly ref struct DeviceGetSerialPacket() : ICrocoPayloadlessPacket<DeviceGetSerialPacket, DeviceGetSerialResponse>
 {
     public static byte CommandId => 253;
-    public static GetSerialResponse Read(Stream stream)
+    public static DeviceGetSerialResponse Read(Stream stream)
     {
         Span<byte> buffer = stackalloc byte[8];
         stream.ReadExactly(buffer);
@@ -15,7 +15,7 @@ public readonly ref struct GetSerialPacket() : ICrocoPayloadlessPacket<GetSerial
     }
 }
 
-public readonly ref struct GetSerialResponse(string serial)
+public readonly ref struct DeviceGetSerialResponse(string serial)
 {
     public readonly string Serial { get; } = serial;
 }

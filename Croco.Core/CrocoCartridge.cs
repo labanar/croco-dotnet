@@ -14,14 +14,14 @@ public class CrocoCartridge : IAsyncDisposable
     public CrocoCartridge(ICrocoConnection connection)
     {
         Connection = connection;
-        var deviceInfo = Connection.SendPacket<GetDeviceInfoPacket, DeviceInfoResponse>(new());
+        var deviceInfo = Connection.SendPacket<DeviceGetInfoPacket, DeviceGetInfoResponse>(new());
 
         HardwareVersion = deviceInfo.HardwareVersion;
         FirmwareVersion = new(deviceInfo.FirmwareVersion_Major, deviceInfo.FirmwareVersion_Minor, deviceInfo.FirmwareVersion_Patch);
         SupportsMbcInfo = deviceInfo.SupportsMbcInfo;
         SupportsSpeedChangeBankInfo = deviceInfo.SupportsSpeedChangeBankInfo;
 
-        var serial = Connection.SendPacket<GetSerialPacket, GetSerialResponse>(new());
+        var serial = Connection.SendPacket<DeviceGetSerialPacket, DeviceGetSerialResponse>(new());
         SerialNumber = serial.Serial;
     }
 
@@ -30,7 +30,7 @@ public class CrocoCartridge : IAsyncDisposable
         var romFile = new RomFileInfo(filePath);
 
         Console.WriteLine("Requesting rom upload...");
-        var romUploadPak = new RequestUploadRomPacket((ushort)romFile.Banks, romFile.Name, SupportsSpeedChangeBankInfo ? (ushort)romFile.SpeedChangeBank : null);
+        var romUploadPak = new RomRequestUploadPacket((ushort)romFile.Banks, romFile.Name, SupportsSpeedChangeBankInfo ? (ushort)romFile.SpeedChangeBank : null);
         var romUploadResponse = Connection.SendPacket(romUploadPak);
 
 
@@ -39,11 +39,11 @@ public class CrocoCartridge : IAsyncDisposable
         {
             for (ushort bank = 0; bank < romFile.Banks; bank++)
             {
-                for (ushort chunk = 0; chunk < RomFileInfo.CHUNKS_PER_BANK; chunk++)
+                for (ushort chunk = 0; chunk < CrocoConstants.CHUNKS_PER_BANK; chunk++)
                 {
-                    var offset = (bank * RomFileInfo.BANK_SIZE) + (chunk * RomFileInfo.CHUNK_SIZE);
-                    var chunkSpan = romFile.RomData.Slice(offset, RomFileInfo.CHUNK_SIZE);
-                    Connection.SendPacket(new SendRomChunkPacket(bank, chunk, chunkSpan));
+                    var offset = (bank * CrocoConstants.BANK_SIZE) + (chunk * CrocoConstants.CHUNK_SIZE);
+                    var chunkSpan = romFile.RomData.Slice(offset, CrocoConstants.CHUNK_SIZE);
+                    Connection.SendPacket(new RomSendChunkPacket(bank, chunk, chunkSpan));
                 }
                 Console.WriteLine($"Uploaded bank {bank + 1}/{romFile.Banks}");
             }
@@ -62,7 +62,7 @@ public class CrocoCartridge : IAsyncDisposable
 
     public void DeleteRom(int romId)
     {
-        Connection.SendPacket(new DeleteRomPacket(romId));
+        Connection.SendPacket(new RomDeletePacket(romId));
 
         //If you do not refresh the roms list the cartridge enters a weird state where it stops responding after a delete request.
         foreach (var _ in GetRoms()) { }
@@ -77,15 +77,15 @@ public class CrocoCartridge : IAsyncDisposable
 
     public RomInfo GetRomInfo(int romId)
     {
-        var romRequest = new GetRomInfoPacket(romId);
+        var romRequest = new RomGetInfoPacket(romId);
 
         if (SupportsMbcInfo)
         {
-            var mbcRomResponse = Connection.SendPacket<GetRomInfoPacket, GetRomInfoResponseWithMbc>(romRequest);
+            var mbcRomResponse = Connection.SendPacket<RomGetInfoPacket, RomGetInfoWithMbcResponse>(romRequest);
             return new(romId, mbcRomResponse.Name, mbcRomResponse.NumRamBanks, mbcRomResponse.NumRomBanks, mbcRomResponse.Mbc);
         }
 
-        var romResponse = Connection.SendPacket<GetRomInfoPacket, GetRomInfoResponse>(romRequest);
+        var romResponse = Connection.SendPacket<RomGetInfoPacket, RomGetInfoResponse>(romRequest);
         return new(romId, romResponse.Name.ToString(), romResponse.NumRamBanks, romResponse.NumRomBanks, 0xFF);
     }
 

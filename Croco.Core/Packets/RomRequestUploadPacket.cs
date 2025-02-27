@@ -4,21 +4,21 @@ using System.Text;
 
 namespace Croco.Core.Packets;
 
-public readonly ref struct RequestUploadRomPacket : ICrocoActionPacket<RequestUploadRomPacket>
+public readonly ref struct RomRequestUploadPacket : ICrocoActionPacket<RomRequestUploadPacket>
 {
     public static byte CommandId => 2;
     public readonly ushort Banks { get; }
     public readonly ReadOnlySpan<char> Name { get; }
     public readonly ushort? SpeedChangeBank { get; }
 
-    public RequestUploadRomPacket(ushort banks, ReadOnlySpan<char> name, ushort? speedChangeBank)
+    public RomRequestUploadPacket(ushort banks, ReadOnlySpan<char> name, ushort? speedChangeBank)
     {
         Banks = banks;
         Name = name;
         SpeedChangeBank = speedChangeBank;
     }
 
-    public static void Write(RequestUploadRomPacket packet, Stream stream)
+    public static void Write(RomRequestUploadPacket packet, Stream stream)
     {
         Span<byte> payload = stackalloc byte[packet.SpeedChangeBank.HasValue ? 21 : 19];
         BinaryPrimitives.WriteUInt16BigEndian(payload.Slice(0, 2), packet.Banks);

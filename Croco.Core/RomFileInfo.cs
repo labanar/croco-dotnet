@@ -1,11 +1,9 @@
-﻿using System.Diagnostics;
+﻿using Croco.Core;
+using System.Diagnostics;
 using System.Text;
 
 public class RomFileInfo
 {
-    public const int BANK_SIZE = 16384;
-    public const int CHUNK_SIZE = 32;
-    public const int CHUNKS_PER_BANK = BANK_SIZE / CHUNK_SIZE;
     private readonly byte[] _romData;
 
     public int Banks { get; }
@@ -18,7 +16,9 @@ public class RomFileInfo
     {
         _romData = File.ReadAllBytes(path);
         Banks = 1 << (_romData[0x0148] + 1);
-        Debug.Assert(_romData.Length / BANK_SIZE == Banks);
+
+        var actualBanks = _romData.Length / CrocoConstants.BANK_SIZE;
+        Debug.Assert(actualBanks == Banks, "ROM length does not match number of banks defined inside rom");
 
         var nameSlice = _romData.AsSpan().Slice(0x134);
         var nameTerminator = nameSlice.IndexOf((byte)'\0');
@@ -48,7 +48,7 @@ public class RomFileInfo
                         break;
                     case 2 when inst == 0x10:
                         speedchangeState = 4;
-                        SpeedChangeBank = (ushort)Math.Floor(i * 1.0m / BANK_SIZE);
+                        SpeedChangeBank = (ushort)Math.Floor(i * 1.0m / CrocoConstants.BANK_SIZE);
                         return;
                     case 2 when inst == 0xc9:
                     case 2 when inst == 0xFF:

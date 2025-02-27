@@ -3,18 +3,18 @@ using System.Text;
 
 namespace Croco.Core.Packets;
 
-public readonly ref struct GetRomInfoPacket(int romId) :
-    ICrocoPacket<GetRomInfoPacket, GetRomInfoResponse>,
-    ICrocoPacket<GetRomInfoPacket, GetRomInfoResponseWithMbc>
+public readonly ref struct RomGetInfoPacket(int romId) :
+    ICrocoPacket<RomGetInfoPacket, RomGetInfoResponse>,
+    ICrocoPacket<RomGetInfoPacket, RomGetInfoWithMbcResponse>
 {
     public static byte CommandId => 4;
     public readonly int RomId { get; } = romId;
-    public static void Write(GetRomInfoPacket packet, Stream stream)
+    public static void Write(RomGetInfoPacket packet, Stream stream)
     {
         stream.Write([CommandId, (byte)packet.RomId]);
     }
 
-    static GetRomInfoResponseWithMbc ICrocoPacket<GetRomInfoPacket, GetRomInfoResponseWithMbc>.Read(Stream stream)
+    static RomGetInfoWithMbcResponse ICrocoPacket<RomGetInfoPacket, RomGetInfoWithMbcResponse>.Read(Stream stream)
     {
         Span<byte> buffer = stackalloc byte[21];
         stream.ReadExactly(buffer);
@@ -22,17 +22,17 @@ public readonly ref struct GetRomInfoPacket(int romId) :
         var numRamBanks = (int)buffer[17];
         byte mbc = (byte)buffer[18];
         var numRomBanks = BinaryPrimitives.ReadUInt16BigEndian(buffer.Slice(19));
-        return new GetRomInfoResponseWithMbc(name, numRamBanks, numRomBanks, mbc);
+        return new RomGetInfoWithMbcResponse(name, numRamBanks, numRomBanks, mbc);
     }
 
-    static GetRomInfoResponse ICrocoPacket<GetRomInfoPacket, GetRomInfoResponse>.Read(Stream stream)
+    static RomGetInfoResponse ICrocoPacket<RomGetInfoPacket, RomGetInfoResponse>.Read(Stream stream)
     {
         Span<byte> buffer = stackalloc byte[20];
         stream.ReadExactly(buffer);
         var name = ReadName(buffer);
         var numRamBanks = (int)buffer[17];
         var numRomBanks = BinaryPrimitives.ReadUInt16BigEndian(buffer.Slice(18));
-        return new GetRomInfoResponse(name, numRamBanks, numRomBanks);
+        return new RomGetInfoResponse(name, numRamBanks, numRomBanks);
     }
 
     private static string ReadName(ReadOnlySpan<byte> buffer)
@@ -44,14 +44,14 @@ public readonly ref struct GetRomInfoPacket(int romId) :
     }
 }
 
-public readonly ref struct GetRomInfoResponseWithMbc
+public readonly ref struct RomGetInfoWithMbcResponse
 {
     public readonly string Name { get; }
     public readonly int NumRamBanks { get; }
     public readonly int NumRomBanks { get; }
     public readonly byte Mbc { get; }
 
-    public GetRomInfoResponseWithMbc(string name, int numRamBanks, int numRomBanks, byte mbc)
+    public RomGetInfoWithMbcResponse(string name, int numRamBanks, int numRomBanks, byte mbc)
     {
         Name = name;
         NumRamBanks = numRamBanks;
@@ -61,13 +61,13 @@ public readonly ref struct GetRomInfoResponseWithMbc
 
 }
 
-public readonly ref struct GetRomInfoResponse
+public readonly ref struct RomGetInfoResponse
 {
     public readonly ReadOnlySpan<char> Name { get; }
     public readonly int NumRamBanks { get; }
     public readonly int NumRomBanks { get; }
 
-    public GetRomInfoResponse(ReadOnlySpan<char> name, int numRamBanks, int numRomBanks)
+    public RomGetInfoResponse(ReadOnlySpan<char> name, int numRamBanks, int numRomBanks)
     {
         Name = name;
         NumRamBanks = numRamBanks;
