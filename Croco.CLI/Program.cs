@@ -67,6 +67,22 @@ public class CrocoCommand
 public class RomCommands
 {
 
+    [CliCommand(Description = "Retrieve the save game file for a ROM")]
+    public class GetSaveGame(CrocoCartridge cartridge)
+    {
+        [CliArgument(Description = "RomId to retrieve save game for")]
+        public int RomId { get; set; }
+
+        [CliArgument(Description = "Save file path - must be a full file name, not a directory")]
+        public required string SaveFilePath { get; set; }
+
+        public void Run()
+        {
+            cartridge.DownloadRomSave(RomId, SaveFilePath);
+        }
+    }
+
+
     [CliCommand(Description = "Retrieve details about what is stored on the cartridge and how much space is available.")]
     public class Utilization(CrocoCartridge cartridge)
     {

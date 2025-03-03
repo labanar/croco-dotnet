@@ -5,6 +5,7 @@ using LibUsbDotNet.Main;
 
 namespace Croco.Core;
 
+
 public class LibUsbCrocoConnection : ICrocoConnection
 {
     private static readonly UsbDeviceFinder[] Finders = [new(0x2E8A, 0x107F), new(0xcafe, 0x2142)];
@@ -38,6 +39,32 @@ public class LibUsbCrocoConnection : ICrocoConnection
             throw new InvalidOperationException("Invalid response");
 
         return TPak.Read(_stream);
+    }
+
+    //Little bit of a hack for when we expect a response to be of a certain size,
+    //but when the response is an error code it does not match the expected size
+    public void SendPacketRaw<TPak, TResponse>(TPak packet, Span<byte> output)
+        where TPak : ICrocoPacket<TPak, TResponse>, allows ref struct
+        where TResponse : allows ref struct
+    {
+        TPak.Write(packet, _stream);
+
+        var echoCommand = _stream.ReadByte();
+
+        //Would be nice to have packet request response follow a similar structure as P2P torrenting
+        //Header + Length + Body
+        //Header: 1 byte
+        //Body Length: 2 bytes (ushort): 2 bytes probably enough for most part?
+        //Body: n bytes (max ushort 2^16 = 65535 bytes)
+
+        if (echoCommand != TPak.CommandId)
+        {
+            //If we have an error we will not get the full expected response
+            output[0] = (byte)echoCommand;
+            return;
+        }
+
+        _stream.ReadExactly(output.Slice(1));
     }
 
     public static bool TryConnectToCartridge(out ICrocoConnection? connection)

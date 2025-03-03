@@ -9,4 +9,8 @@ public interface ICrocoConnection : IAsyncDisposable
 
     ActionResponse SendPacket<TPak>(TPak packet)
         where TPak : ICrocoPacket<TPak, ActionResponse>, allows ref struct;
+
+    void SendPacketRaw<TPak, TResponse>(TPak packet, Span<byte> output)
+        where TPak : ICrocoPacket<TPak, TResponse>, allows ref struct
+        where TResponse : allows ref struct;
 }
