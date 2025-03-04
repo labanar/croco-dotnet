@@ -15,9 +15,10 @@ Command checklist:
 - [x] Upload Rom Chunk
 - [ ] Request Save Upload
 - [ ] Upload Save Chunk
-- [ ] Request Save Download
-- [ ] Receive Save Chunk
-
+- [x] Request Save Download
+- [x] Receive Save Chunk
+- [x] Get Rom RTC
+- [ ] Set ROM RTC
 
 Example usage of the CLI:
 
