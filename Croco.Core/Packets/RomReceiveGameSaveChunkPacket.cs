@@ -1,8 +1,9 @@
 ﻿using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 
 namespace Croco.Core.Packets;
 
-internal class RomReceiveGameSaveChunkPacket : ICrocoPayloadlessPacket<RomReceiveGameSaveChunkPacket, RomReceiveGameSaveChunkResponse>
+public readonly ref struct RomReceiveGameSaveChunkPacket : ICrocoPayloadlessPacket<RomReceiveGameSaveChunkPacket, RomReceiveGameSaveChunkResponse>
 {
     public static byte CommandId => 7;
 
@@ -12,21 +13,28 @@ internal class RomReceiveGameSaveChunkPacket : ICrocoPayloadlessPacket<RomReceiv
         stream.ReadExactly(buffer);
         var bank = BinaryPrimitives.ReadUInt16BigEndian(buffer);
         var chunk = BinaryPrimitives.ReadUInt16BigEndian(buffer.Slice(2));
-        var data = buffer.Slice(4);
-        return new RomReceiveGameSaveChunkResponse(bank, chunk, data.ToArray());
+        var chunkData = new ChunkData();
+        buffer.Slice(4, 32).CopyTo(chunkData);
+        return new RomReceiveGameSaveChunkResponse(bank, chunk, chunkData);
     }
 }
 
 public readonly ref struct RomReceiveGameSaveChunkResponse
 {
-    public readonly ushort Bank { get; }
-    public readonly ushort Chunk { get; }
-    public readonly byte[] Data { get; }
-
-    public RomReceiveGameSaveChunkResponse(ushort bank, ushort chunk, byte[] data)
+    public readonly int Bank { get; }
+    public readonly int Chunk { get; }
+    public readonly ChunkData Data { get; }
+    public RomReceiveGameSaveChunkResponse(int bank, int chunk, ChunkData data)
     {
         Bank = bank;
         Chunk = chunk;
         Data = data;
     }
+}
+
+
+[InlineArray(CrocoConstants.CHUNK_SIZE)]
+public struct ChunkData
+{
+    private byte _element0;
 }

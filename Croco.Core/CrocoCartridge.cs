@@ -87,9 +87,7 @@ public class CrocoCartridge : IAsyncDisposable
         var rtcData = hasRtcData ? rtcResponse.Slice(2, CrocoConstants.RTC_SAVE_SIZE) : [];
 
         //Write to a temp file then do a copy/overwrite of the output file path
-        using var fs = new FileStream(outputFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-        fs.SetLength(saveFileSize);
-
+        using var fs = File.OpenWrite(outputFilePath);
 
         //Request save game
         var response = Connection.SendPacket<RomRequestSavePacket, RomRequestSaveResponse>(new RomRequestSavePacket((ushort)romId));
@@ -99,11 +97,11 @@ public class CrocoCartridge : IAsyncDisposable
             var bank = (int)Math.Floor(1.0m * bytesTransferred / CrocoConstants.RAM_BANK_SIZE);
             var chunk = (int)(bytesTransferred - (bank * CrocoConstants.RAM_BANK_SIZE)) / CrocoConstants.CHUNK_SIZE;
 
-            Console.WriteLine("Expecting bank: {0} chunk: {1} {2}/{3} Bytes", bank, chunk, bytesTransferred, bytesToTransfer);
+            //Console.WriteLine("Expecting bank: {0} chunk: {1} {2}/{3} Bytes", bank, chunk, bytesTransferred, bytesToTransfer);
 
             var gameSaveChunk = Connection.SendPacket<RomReceiveGameSaveChunkPacket, RomReceiveGameSaveChunkResponse>(new());
-            bytesTransferred += gameSaveChunk.Data.Length;
-            fs.Write(gameSaveChunk.Data);
+            bytesTransferred += CrocoConstants.CHUNK_SIZE;
+            fs.Write([.. gameSaveChunk.Data]);
         }
 
         //If we have RTC data we need to place it at the end of the save file
@@ -111,7 +109,7 @@ public class CrocoCartridge : IAsyncDisposable
         {
             //RTC data is 48 bytes, we skip the first 40 and take the last 8 to get the timestamp, not sure what's in the first 40 bytes
             var localTimestamp = BinaryPrimitives.ReadUInt64LittleEndian(rtcData.Slice(40));
-            Console.WriteLine("RTC Timestamp: {0}", localTimestamp);
+            //Console.WriteLine("RTC Timestamp: {0}", localTimestamp);
 
             var localDate = DateTimeOffset.FromUnixTimeSeconds((long)localTimestamp);
             localDate = DateTime.SpecifyKind(localDate.DateTime, DateTimeKind.Local);
