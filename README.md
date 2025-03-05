@@ -4,8 +4,7 @@ Command Line Utility to interface with [Croco RP2040 Based GameBoy Game Cartridg
 
 Based on the Web App found [here](https://github.com/shilga/croco-cartridge-webapp)
 
-
-Command checklist:
+Packet checklist:
 - [x] Read Serial
 - [x] Read Device Info
 - [x] Get Rom Utilization
@@ -13,19 +12,19 @@ Command checklist:
 - [x] Delete Rom
 - [x] Request Rom Upload
 - [x] Upload Rom Chunk
-- [ ] Request Save Upload
-- [ ] Upload Save Chunk
+- [x] Request Save Upload
+- [x] Upload Save Chunk
 - [x] Request Save Download
 - [x] Receive Save Chunk
 - [x] Get Rom RTC
-- [ ] Set ROM RTC
+- [x] Set ROM RTC
 
 Example usage of the CLI:
 
 ```
 > croco
 
-croco v1.0.0+dfcd41ac5c5eea07fe836c70aea0aac6ba62cc42
+croco v1.0.0+aac8135340f514a1fe8ca45edc264e64cc1af850
 
 A command utility to interface with a Croco Cartridge
 
@@ -49,7 +48,7 @@ ROM commands
 ```
 > croco rom
 
-croco v1.0.0+dfcd41ac5c5eea07fe836c70aea0aac6ba62cc42
+croco v1.0.0+aac8135340f514a1fe8ca45edc264e64cc1af850
 
 rom: ROM commands
 
@@ -60,6 +59,8 @@ Options:
   -?, -h, --help  Show help and usage information
 
 Commands:
+  get-save     Retrieve the save game file for a ROM [default: 0]
+  upload-save  Upload a game save to the cartridge [default: 0]
   utilization  Retrieve details about what is stored on the cartridge and how much space is available.
   list         List ROMs installed on the cartridge
   delete       Deletes a ROM from the cartridge by it's ID. [default: 0]
