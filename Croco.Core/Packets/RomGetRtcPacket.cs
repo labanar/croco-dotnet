@@ -1,14 +1,9 @@
 ﻿namespace Croco.Core.Packets;
 
-public readonly ref struct RomRtcResponse
+public readonly ref struct RomRtcResponse(int romId, RtcData data)
 {
-    public int RomId { get; }
-    public readonly byte[] Data { get; }
-    public RomRtcResponse(int romId, byte[] data)
-    {
-        RomId = romId;
-        Data = data;
-    }
+    public readonly int RomId { get; } = romId;
+    public readonly RtcData Data { get; } = data;
 }
 
 public readonly ref struct RomGetRtcPacket(int romId) : ICrocoPacket<RomGetRtcPacket, RomRtcResponse>
@@ -19,9 +14,9 @@ public readonly ref struct RomGetRtcPacket(int romId) : ICrocoPacket<RomGetRtcPa
     public static RomRtcResponse Read(Stream stream)
     {
         var romId = stream.ReadByte();
-        Span<byte> buffer = stackalloc byte[48];
-        stream.ReadExactly(buffer);
-        var response = new RomRtcResponse(romId, buffer.ToArray());
+        var rtcData = new RtcData();
+        stream.ReadExactly(rtcData);
+        var response = new RomRtcResponse(romId, rtcData);
         return response;
     }
 

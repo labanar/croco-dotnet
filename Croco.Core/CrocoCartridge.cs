@@ -126,6 +126,52 @@ public class CrocoCartridge : IAsyncDisposable
     }
 
 
+    public void UploadRomSave(int romId, string saveFilePath)
+    {
+        var romInfo = GetRomInfo(romId);
+        var bytesToTransfer = romInfo.Mbc != 2 ? romInfo.RamBanks * CrocoConstants.RAM_BANK_SIZE : CrocoConstants.MBC2_RAM_SIZE;
+
+        var saveData = File.ReadAllBytes(saveFilePath);
+
+        var hasRtcData = saveData.Length == bytesToTransfer + CrocoConstants.RTC_SAVE_SIZE;
+
+        //Split out the RTC data from the save game data
+
+        var response = Connection.SendPacket(new RomRequestUploadSavePacket(romId));
+        var bytesTransferred = 0;
+        while (bytesTransferred < bytesToTransfer)
+        {
+            var bank = (ushort)Math.Floor(1.0m * bytesTransferred / CrocoConstants.RAM_BANK_SIZE);
+            var chunk = (ushort)((bytesTransferred - (bank * CrocoConstants.RAM_BANK_SIZE)) / CrocoConstants.CHUNK_SIZE);
+            //Console.WriteLine("Expecting bank: {0} chunk: {1} {2}/{3} Bytes", bank, chunk, bytesTransferred, bytesToTransfer);
+
+            var data = saveData.AsSpan().Slice(bytesTransferred, CrocoConstants.CHUNK_SIZE);
+            Connection.SendPacket<RomSendGameSaveChunkPacket>(new(bank, chunk, data));
+            bytesTransferred += CrocoConstants.CHUNK_SIZE;
+        }
+
+        if (hasRtcData)
+        {
+            var rtcBytes = saveData.AsSpan().Slice(bytesToTransfer, CrocoConstants.RTC_SAVE_SIZE);
+
+            var utcTimestamp = BinaryPrimitives.ReadUInt64LittleEndian(rtcBytes.Slice(40));
+            //Console.WriteLine("RTC Timestamp: {0}", utcTimestamp);
+
+            var utcDate = DateTimeOffset.FromUnixTimeSeconds((long)utcTimestamp);
+
+            var tz = TimeZoneInfo.Local;
+            var localDate = utcDate - tz.BaseUtcOffset;
+
+            var localTimestamp = localDate.ToUnixTimeSeconds();
+            BinaryPrimitives.WriteUInt64LittleEndian(rtcBytes.Slice(40), (ulong)localTimestamp);
+
+            var rtcData = new RtcData();
+            rtcBytes.CopyTo(rtcData);
+            Connection.SendPacket<RomSendRtcPacket>(new(romId, rtcData));
+        }
+    }
+
+
     public void DeleteRom(int romId)
     {
         Connection.SendPacket(new RomDeletePacket(romId));

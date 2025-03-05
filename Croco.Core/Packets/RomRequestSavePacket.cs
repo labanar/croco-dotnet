@@ -23,9 +23,7 @@ public readonly ref struct RomRequestSavePacket : ICrocoPacket<RomRequestSavePac
 
     public static RomRequestSaveResponse Read(Stream stream)
     {
-        var expectedData = new byte[1];
-        stream.ReadExactly(expectedData);
-
-        return new RomRequestSaveResponse { ErrorCode = expectedData[0] };
+        var errorCode = (byte)stream.ReadByte();
+        return new RomRequestSaveResponse { ErrorCode = errorCode };
     }
 }
